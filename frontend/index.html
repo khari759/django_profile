@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hari Krishna Komire — Full Stack Software Engineer</title>
+    <meta
+      name="description"
+      content="Portfolio of Hari Krishna Komire, a full stack software engineer working with Python, Django, React.js and TypeScript."
+    />
+    <meta name="theme-color" content="#0b0d12" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Hari Krishna Komire — Full Stack Software Engineer" />
+    <meta
+      property="og:description"
+      content="Python · Django · React.js · TypeScript. Building web applications end to end."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      // Apply the saved theme before first paint so there is no flash of the
+      // wrong palette. Kept in sync with src/hooks/useTheme.ts.
+      (function () {
+        try {
+          var stored = localStorage.getItem("portfolio-theme");
+          if (stored === "light" || stored === "dark") {
+            document.documentElement.dataset.theme = stored;
+            return;
+          }
+        } catch (error) {
+          /* storage blocked — fall through to the OS preference */
+        }
+        var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+        document.documentElement.dataset.theme = prefersLight ? "light" : "dark";
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

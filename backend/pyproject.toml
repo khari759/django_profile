@@ -1,0 +1,26 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"
+testpaths = ["portfolio/tests"]
+filterwarnings = [
+    "error",
+    # WhiteNoise warns that STATIC_ROOT is missing; collectstatic creates it at
+    # build time and tests never serve static files.
+    "ignore:No directory at:UserWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [".venv", "migrations", "staticfiles"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "C4", "SIM"]
+ignore = [
+    # Django's `null=True` on CharField is intentional where the column is optional.
+    "DJ001",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"portfolio/tests/*" = ["B011"]

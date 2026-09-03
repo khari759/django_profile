@@ -1,0 +1,59 @@
+# Render Blueprint for the Django API — free tier.
+#
+# To deploy: render.com -> New -> Blueprint -> connect this repo.
+# Render reads this file and creates the web service and database.
+#
+# Free-tier caveats worth knowing:
+#   * The web service sleeps after ~15 minutes idle; the first request after
+#     that takes ~30-50 seconds to wake.
+#   * The free PostgreSQL instance expires after 30 days and must be recreated.
+#   * The filesystem is ephemeral, so uploaded images/PDFs vanish on redeploy.
+#     Keep the CV and screenshots in the repo, or attach S3/Cloudinary.
+
+databases:
+  - name: portfolio-db
+    databaseName: portfolio
+    user: portfolio
+    plan: free
+
+services:
+  - type: web
+    name: portfolio-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    # Migrate and seed on every boot so a fresh database is never empty.
+    startCommand: >
+      python manage.py migrate --noinput &&
+      python manage.py seed_portfolio &&
+      gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --access-logfile -
+    healthCheckPath: /api/health/
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: portfolio-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        # Leading dot is a Django wildcard: matches any *.onrender.com host,
+        # so this survives Render renaming the service.
+        value: .onrender.com,localhost,127.0.0.1
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        # Render terminates TLS at its proxy and already redirects to HTTPS.
+        value: "False"
+      - key: DJANGO_CORS_ALLOWED_ORIGINS
+        # Replace with your GitHub Pages URL after the first Pages deploy.
+        value: https://khari759.github.io
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: https://khari759.github.io
+      - key: DJANGO_TIME_ZONE
+        value: Asia/Kolkata
+      - key: CONTACT_NOTIFY_EMAIL
+        # Set in the Render dashboard to receive contact-form notifications.
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.13.1"

@@ -1,0 +1,67 @@
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Required for the Pages deployment to authenticate.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deployments at once, but let a newer commit win.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          # Repository name prefix, e.g. /django_profile/
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          # Set this repository variable to your deployed API URL
+          # (Settings -> Secrets and variables -> Actions -> Variables).
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+
+      - name: Add SPA 404 fallback
+        # GitHub Pages has no rewrite rules; serving the shell as 404.html
+        # makes deep links work instead of showing Pages' own 404.
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

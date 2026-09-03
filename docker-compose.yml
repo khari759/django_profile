@@ -1,0 +1,57 @@
+# Full stack for local verification: PostgreSQL + Django API + nginx-served React.
+#   docker compose up --build
+#   open http://localhost:5173        (site)
+#   open http://localhost:8000/admin/ (admin)
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: portfolio
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgres://portfolio:portfolio@db:5432/portfolio
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-compose-only-not-for-production}
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      DJANGO_SECURE_SSL_REDIRECT: "False"
+      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      CONTACT_NOTIFY_EMAIL: ${CONTACT_NOTIFY_EMAIL:-}
+      DJANGO_EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
+    # Migrate and seed on boot so the site is never empty on a fresh volume.
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py seed_portfolio &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -"
+    ports:
+      - "8000:8000"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://127.0.0.1:8000
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  media_data:
