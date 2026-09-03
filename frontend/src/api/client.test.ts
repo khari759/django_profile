@@ -3,8 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ApiRequestError,
   ApiValidationError,
+  DEFAULT_API_BASE_URL,
   fetchOverview,
   mediaUrl,
+  resolveApiBaseUrl,
   submitContactMessage,
 } from "./client";
 import { jsonResponse, overviewFixture } from "../test/fixtures";
@@ -15,6 +17,37 @@ const payload = {
   subject: "Role",
   message: "We would like to talk to you.",
 };
+
+describe("resolveApiBaseUrl", () => {
+  it("uses a configured URL", () => {
+    expect(resolveApiBaseUrl("https://api.example.com")).toBe("https://api.example.com");
+  });
+
+  it("falls back when the value is undefined", () => {
+    expect(resolveApiBaseUrl(undefined)).toBe(DEFAULT_API_BASE_URL);
+  });
+
+  it("falls back when the value is an empty string", () => {
+    // An unset GitHub Actions variable expands to "" — without this the app
+    // would request /api/... from its own origin and 404 in production.
+    expect(resolveApiBaseUrl("")).toBe(DEFAULT_API_BASE_URL);
+  });
+
+  it("falls back when the value is only whitespace", () => {
+    expect(resolveApiBaseUrl("   ")).toBe(DEFAULT_API_BASE_URL);
+  });
+
+  it("trims surrounding whitespace", () => {
+    expect(resolveApiBaseUrl("  https://api.example.com  ")).toBe(
+      "https://api.example.com",
+    );
+  });
+
+  it("strips trailing slashes so paths do not double up", () => {
+    expect(resolveApiBaseUrl("https://api.example.com/")).toBe("https://api.example.com");
+    expect(resolveApiBaseUrl("https://api.example.com///")).toBe("https://api.example.com");
+  });
+});
 
 describe("fetchOverview", () => {
   beforeEach(() => {

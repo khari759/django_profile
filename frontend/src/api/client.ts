@@ -1,12 +1,25 @@
 import type { ContactPayload, FieldErrors, Overview } from "../types";
 
+export const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
+
+/**
+ * Normalises a configured API base URL.
+ *
+ * An unset GitHub Actions variable expands to an empty string rather than
+ * being absent, so `??` alone would leave the base URL blank and every request
+ * would hit the frontend's own origin. Blank values fall back to the default.
+ */
+export function resolveApiBaseUrl(configured: string | undefined): string {
+  const trimmed = configured?.trim();
+  const base = trimmed ? trimmed : DEFAULT_API_BASE_URL;
+  return base.replace(/\/+$/, "");
+}
+
 /**
  * Base URL of the Django API. Configured per environment via `VITE_API_BASE_URL`
  * (see `.env.example`); defaults to the local dev server.
  */
-export const API_BASE_URL: string = (
-  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000"
-).replace(/\/$/, "");
+export const API_BASE_URL: string = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 /** A request that reached the server but was rejected — carries DRF's field errors. */
 export class ApiValidationError extends Error {
