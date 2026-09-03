@@ -1,6 +1,7 @@
 """Read-only API for portfolio content, plus a write endpoint for the contact form."""
 
 import logging
+import os
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -155,5 +156,19 @@ class OverviewView(APIView):
 
 
 class HealthView(APIView):
+    """Liveness probe that also reports which commit is actually running.
+
+    Without this, confirming that a push reached the host means guessing.
+    `RENDER_GIT_COMMIT` is injected by Render; the value is public information
+    (the repository is public) and no credentials are exposed.
+    """
+
     def get(self, request):
-        return Response({"status": "ok"})
+        commit = os.getenv("RENDER_GIT_COMMIT", "")
+        return Response(
+            {
+                "status": "ok",
+                "commit": commit[:7] if commit else "unknown",
+                "debug": settings.DEBUG,
+            }
+        )

@@ -12,7 +12,17 @@ class TestHealthAndRoot:
     def test_health_returns_ok(self, api_client):
         response = api_client.get(reverse("portfolio:health"))
         assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        assert response.json()["status"] == "ok"
+
+    def test_health_reports_the_running_commit(self, api_client, monkeypatch):
+        monkeypatch.setenv("RENDER_GIT_COMMIT", "abcdef1234567890")
+        response = api_client.get(reverse("portfolio:health"))
+        assert response.json()["commit"] == "abcdef1"
+
+    def test_health_commit_is_unknown_when_unset(self, api_client, monkeypatch):
+        monkeypatch.delenv("RENDER_GIT_COMMIT", raising=False)
+        response = api_client.get(reverse("portfolio:health"))
+        assert response.json()["commit"] == "unknown"
 
     def test_root_lists_endpoints(self, api_client):
         response = api_client.get(reverse("api-root"))
