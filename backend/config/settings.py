@@ -11,6 +11,8 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
+from config.email import build_mailers
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
@@ -146,26 +148,14 @@ CORS_ALLOWED_ORIGINS = env_list(
 )
 
 
-# Email — contact form notifications. Console backend prints to stdout in dev.
+# Email — contact form notifications. Console backend prints to stdout in dev,
+# SMTP in production. See config/email.py for the environment mapping.
 
-DEFAULT_EMAIL_BACKEND = (
-    "django.core.mail.backends.console.EmailBackend"
-    if DEBUG
-    else "django.core.mail.backends.smtp.EmailBackend"
+MAILERS = build_mailers(os.environ, DEBUG)
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DJANGO_DEFAULT_FROM_EMAIL", os.getenv("DJANGO_EMAIL_USER", "portfolio@localhost")
 )
-
-MAILERS = {
-    "default": {
-        "BACKEND": os.getenv("DJANGO_EMAIL_BACKEND", DEFAULT_EMAIL_BACKEND),
-        "HOST": os.getenv("DJANGO_EMAIL_HOST", "localhost"),
-        "PORT": int(os.getenv("DJANGO_EMAIL_PORT", "25")),
-        "USERNAME": os.getenv("DJANGO_EMAIL_USER", ""),
-        "PASSWORD": os.getenv("DJANGO_EMAIL_PASSWORD", ""),
-        "USE_TLS": env_bool("DJANGO_EMAIL_USE_TLS", False),
-    },
-}
-
-DEFAULT_FROM_EMAIL = os.getenv("DJANGO_DEFAULT_FROM_EMAIL", "portfolio@localhost")
 CONTACT_NOTIFY_EMAIL = os.getenv("CONTACT_NOTIFY_EMAIL", "")
 
 

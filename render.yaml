@@ -56,7 +56,20 @@ services:
       - key: DJANGO_TIME_ZONE
         value: Asia/Kolkata
       - key: CONTACT_NOTIFY_EMAIL
-        # Set in the Render dashboard to receive contact-form notifications.
+        # Where contact-form notifications are sent. Leave unset to only store
+        # messages in the admin.
+        sync: false
+      # SMTP credentials for those notifications. With Gmail, DJANGO_EMAIL_PASSWORD
+      # must be an App Password, not the account password.
+      - key: DJANGO_EMAIL_HOST
+        value: smtp.gmail.com
+      - key: DJANGO_EMAIL_PORT
+        value: "587"
+      - key: DJANGO_EMAIL_USE_TLS
+        value: "True"
+      - key: DJANGO_EMAIL_USER
+        sync: false
+      - key: DJANGO_EMAIL_PASSWORD
         sync: false
       # Admin account, recreated on every boot by ensure_superuser.
       # sync: false means Render prompts for these and never stores them in
