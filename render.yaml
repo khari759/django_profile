@@ -23,10 +23,13 @@ services:
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    # Migrate and seed on every boot so a fresh database is never empty.
+    # Migrate, seed and ensure the admin user on every boot, so a rebuilt or
+    # recreated database (the free tier drops it after 30 days) comes back
+    # complete without any manual steps.
     startCommand: >
       python manage.py migrate --noinput &&
       python manage.py seed_portfolio &&
+      python manage.py ensure_superuser &&
       gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --access-logfile -
     healthCheckPath: /api/health/
     envVars:
@@ -54,6 +57,15 @@ services:
         value: Asia/Kolkata
       - key: CONTACT_NOTIFY_EMAIL
         # Set in the Render dashboard to receive contact-form notifications.
+        sync: false
+      # Admin account, recreated on every boot by ensure_superuser.
+      # sync: false means Render prompts for these and never stores them in
+      # this file — do not commit the password.
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
         sync: false
       - key: PYTHON_VERSION
         value: "3.13.1"

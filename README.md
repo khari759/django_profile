@@ -4,6 +4,12 @@ A content-managed portfolio site. Every section the visitor sees — profile, sk
 experience, projects, education, certifications — is a Django model editable from the
 admin, so updating the site never means editing code or redeploying.
 
+**Live site:** <https://khari759.github.io/django_profile/>
+**API:** <https://portfolio-api-f06z.onrender.com> · **Admin:** `/admin/`
+
+> The API runs on Render's free tier and sleeps after ~15 minutes idle, so the first
+> request can take 30–50 seconds to wake it.
+
 **Backend:** Python 3.13 · Django 6.1 · Django REST Framework · PostgreSQL / SQLite
 **Frontend:** React 19 · TypeScript · Vite · plain CSS (no UI framework)
 **Tooling:** pytest · Vitest · Testing Library · ruff · oxlint · Docker · GitHub Actions
@@ -44,7 +50,7 @@ admin, so updating the site never means editing code or redeploying.
 
 ## Architecture
 
-```
+```text
 ┌──────────────────────────┐         ┌────────────────────────────────┐
 │  React 19 + TypeScript   │         │      Django 6.1 + DRF          │
 │  (Vite, static hosting)  │         │      (gunicorn)                │
@@ -176,13 +182,13 @@ Notes on specific fields:
 
 ```bash
 # Backend (from backend/, venv active)
-pytest                      # 40 tests
+pytest                      # 51 tests
 ruff check .                # lint
 ruff format .               # format
 python manage.py check --deploy   # production-readiness audit
 
 # Frontend (from frontend/)
-npm run test                # 43 tests
+npm run test                # 49 tests
 npm run test:coverage       # with coverage report
 npm run typecheck           # tsc, strict mode
 npm run lint                # oxlint
@@ -248,10 +254,25 @@ copies `index.html` to `404.html` so deep links work without server rewrites.
    `DJANGO_CSRF_TRUSTED_ORIGINS` contain your Pages origin
    (`https://<username>.github.io`).
 
-Then create your admin user:
+### The admin account
+
+Set three environment variables in the Render dashboard (**your service → Environment**):
+
+| Variable                    | Value                             |
+| --------------------------- | --------------------------------- |
+| `DJANGO_SUPERUSER_USERNAME` | your admin username               |
+| `DJANGO_SUPERUSER_EMAIL`    | your email                        |
+| `DJANGO_SUPERUSER_PASSWORD` | a long random password            |
+
+`ensure_superuser` runs on every boot and creates or updates that account. This is
+deliberate rather than a one-off `createsuperuser`: the free database is dropped after
+30 days, and a hand-made account would vanish with it. Rotating the password is just a
+matter of changing the variable and redeploying.
+
+Locally, create the user interactively instead — with the variables unset the command
+does nothing:
 
 ```bash
-# Render dashboard -> your service -> Shell
 python manage.py createsuperuser
 ```
 
@@ -266,7 +287,7 @@ python manage.py createsuperuser
 
 ## Project layout
 
-```
+```text
 .
 ├── backend/
 │   ├── config/                     # settings, root URLs, WSGI
