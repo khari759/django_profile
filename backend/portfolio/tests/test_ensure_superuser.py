@@ -100,3 +100,33 @@ class TestEnsureSuperuser:
         user = User.objects.get(username="hari")
         assert user.is_superuser
         assert user.check_password("a-long-enough-password")
+
+
+@pytest.mark.django_db
+class TestSeedPortfolioBootstrapsTheAdmin:
+    """The deploy start command runs seed_portfolio, so it must create the admin.
+
+    This is what makes the admin account appear on a host whose start command
+    cannot be changed without re-syncing its config.
+    """
+
+    def test_seed_creates_the_superuser(self, credentials):
+        call_command("seed_portfolio", verbosity=0)
+        user = User.objects.get(username="hari")
+        assert user.is_superuser
+        assert user.check_password("a-long-enough-password")
+
+    def test_seed_without_credentials_creates_no_user(self, monkeypatch):
+        monkeypatch.delenv("DJANGO_SUPERUSER_USERNAME", raising=False)
+        monkeypatch.delenv("DJANGO_SUPERUSER_PASSWORD", raising=False)
+        call_command("seed_portfolio", verbosity=0)
+        assert not User.objects.exists()
+
+    def test_skip_superuser_flag_is_honoured(self, credentials):
+        call_command("seed_portfolio", "--skip-superuser", verbosity=0)
+        assert not User.objects.exists()
+
+    def test_reset_still_bootstraps_the_admin(self, credentials):
+        call_command("seed_portfolio", verbosity=0)
+        call_command("seed_portfolio", "--reset", verbosity=0)
+        assert User.objects.get(username="hari").is_superuser

@@ -6,6 +6,7 @@ Edit the data below (or the Django admin) to keep the portfolio current.
 
 from datetime import date
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -245,6 +246,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Delete existing portfolio content before seeding (keeps contact messages).",
         )
+        parser.add_argument(
+            "--skip-superuser",
+            action="store_true",
+            help="Do not run ensure_superuser afterwards.",
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -259,6 +265,13 @@ class Command(BaseCommand):
         self._seed_projects()
         self._seed_education()
         self._seed_certifications()
+
+        if not options["skip_superuser"]:
+            # Bootstrapping the admin account belongs here so that a host whose
+            # start command already runs this command gets a usable admin
+            # without any change to that command. It is a no-op unless the
+            # DJANGO_SUPERUSER_* variables are set, so local runs are unaffected.
+            call_command("ensure_superuser", verbosity=options["verbosity"])
 
         self.stdout.write(self.style.SUCCESS("Portfolio content seeded."))
 
