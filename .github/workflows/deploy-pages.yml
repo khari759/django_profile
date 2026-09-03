@@ -35,14 +35,33 @@ jobs:
 
       - run: npm ci
 
+      - name: Work out the base path
+        id: base
+        # A project site is served from /<repo>/, but a user site
+        # (<user>.github.io) and any custom domain are served from the root.
+        # Getting this wrong makes every asset 404, so it is computed rather
+        # than hardcoded.
+        run: |
+          repo="${{ github.event.repository.name }}"
+          if [ -n "${{ vars.CUSTOM_DOMAIN }}" ] || [ "$repo" = "${{ github.repository_owner }}.github.io" ]; then
+            echo "path=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/$repo/" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build
         run: npm run build
         env:
-          # Repository name prefix, e.g. /django_profile/
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_BASE_PATH: ${{ steps.base.outputs.path }}
           # Set this repository variable to your deployed API URL
           # (Settings -> Secrets and variables -> Actions -> Variables).
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+
+      - name: Attach the custom domain
+        # Pages needs a CNAME file in the published output to serve a custom
+        # domain. Set the CUSTOM_DOMAIN repository variable to enable it.
+        if: vars.CUSTOM_DOMAIN != ''
+        run: echo "${{ vars.CUSTOM_DOMAIN }}" > dist/CNAME
 
       - name: Add SPA 404 fallback
         # GitHub Pages has no rewrite rules; serving the shell as 404.html
