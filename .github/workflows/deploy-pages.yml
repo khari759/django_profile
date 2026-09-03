@@ -49,13 +49,21 @@ jobs:
             echo "path=/$repo/" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Override the API URL from a repository variable
+        # The committed .env.production holds the deployed API URL. This lets
+        # you point the site at a different API without a commit, by setting
+        # the VITE_API_BASE_URL repository variable. Written as a .local file
+        # because Vite gives those precedence over .env.production.
+        #
+        # An empty variable must not be passed to the build at all: it would
+        # blank out the committed value rather than leaving it alone.
+        if: vars.VITE_API_BASE_URL != ''
+        run: echo "VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}" > .env.production.local
+
       - name: Build
         run: npm run build
         env:
           VITE_BASE_PATH: ${{ steps.base.outputs.path }}
-          # Set this repository variable to your deployed API URL
-          # (Settings -> Secrets and variables -> Actions -> Variables).
-          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
 
       - name: Attach the custom domain
         # Pages needs a CNAME file in the published output to serve a custom

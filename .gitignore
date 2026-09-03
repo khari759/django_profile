@@ -27,6 +27,10 @@ coverage/
 .env
 .env.*
 !.env.example
+# Frontend build-time config is inlined into the public bundle, so it holds no
+# secrets and is tracked deliberately. Local overrides stay ignored.
+!frontend/.env.production
+frontend/.env.production.local
 
 # --- Editors / OS ---
 .DS_Store
