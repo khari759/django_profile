@@ -10,6 +10,9 @@ admin, so updating the site never means editing code or redeploying.
 > The API runs on Render's free tier and sleeps after ~15 minutes idle, so the first
 > request can take 30–50 seconds to wake it.
 
+**Setting this up or operating it?** [SETUP.md](SETUP.md) has the full environment
+variable reference, deployment steps, verification commands and troubleshooting.
+
 **Backend:** Python 3.13 · Django 6.1 · Django REST Framework · PostgreSQL / SQLite
 **Frontend:** React 19 · TypeScript · Vite · plain CSS (no UI framework)
 **Tooling:** pytest · Vitest · Testing Library · ruff · oxlint · Docker · GitHub Actions
